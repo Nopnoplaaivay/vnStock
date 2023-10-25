@@ -148,6 +148,8 @@ def candlestick_chart(file_path, stock_code):
     # # Rotate x-axis labels for better visibility
     plt.xticks(rotation=45)
 
+    fig.set_size_inches(1920/80, 1080/80)  # Adjust the size as needed
+    plt.savefig("vhc_chart.png")
     # # Show the chart
     plt.show()
 
