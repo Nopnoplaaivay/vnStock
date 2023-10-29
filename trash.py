@@ -1,24 +1,22 @@
-import matplotlib.pyplot as plt
+import pandas as pd
 import numpy as np
-from matplotlib.gridspec import GridSpec
 
-data1 = np.random.rand(10, 10)
-data2 = np.random.rand(10, 10)
+# Tạo một DataFrame với dữ liệu giả định về giá cổ phiếu theo từng ngày
+np.random.seed(0)
+date_range = pd.date_range('2023-10-01', periods=100, freq='D')
+prices = np.random.randint(1, 100, size=100)
+stock_df = pd.DataFrame({'Date': date_range, 'Price': prices})
 
-fig = plt.figure(figsize=(8, 4))
-gs = fig.add_gridspec(1, 2)
+# Đặt cột 'Date' làm chỉ mục cho DataFrame
+stock_df.set_index('Date', inplace=True)
 
-fig_left = fig.add_subfigure(gs[:, 0])
-fig_right = fig.add_subfigure(gs[:, 1])
+# In ra dữ liệu ban đầu
+print("Dữ liệu ban đầu:")
+print(stock_df.head(10))
 
-fig_left.set_facecolor("red")
-ax_left = fig_left.subplots()
-ax_left.set_title("red")
-# img_left = ax_left.imshow(data1, aspect="equal")
+# Resample theo tuần và tính giá trị trung bình hàng tuần
+weekly_resampled = stock_df.resample('W').mean()
 
-fig_right.set_facecolor("blue")
-ax_right = fig_right.subplots()
-ax_right.set_title("blue")
-# img_right = ax_right.imshow(data2, aspect="equal")
-
-plt.show()
+# In ra kết quả resample theo tuần
+print("\nKết quả resample hàng tuần:")
+print(weekly_resampled.head(10))

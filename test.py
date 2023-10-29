@@ -235,8 +235,6 @@ def main_plot(file_path, main_stock_code):
     figure_design(ax1)
 ## ------------------------------------- CREATE MAIN STOCK ----------------------------------- ##
 
-figure_design(ax8)
-figure_design(ax9)
 
 
 ## --------------- PLOT MAIN STOCK ------------ ##
@@ -255,6 +253,42 @@ for i in range(6):
     subplot_plot(right_sub_plots[i], right_stocks[i],
                  data, latest_price, latest_change, latest_volume)
 ## ------------------------------------- PLOT SUB STOCKS ----------------------------------- ##
+
+
+## ------------------------------------- VOLUME PLOT ----------------------------------- ##
+ax8.clear()
+figure_design(ax8)
+ax8.axes.yaxis.set_visible(False)
+
+data_ohlc = read_data_ohlc(f'./Data/{stocks[0]}.csv')
+data = data_ohlc[0]
+vol = data_ohlc[-1]
+
+pos = data['open'] - data['close'] < 0
+neg = data['open'] - data['close'] > 0
+# print(pos)
+# print(neg)
+data['x_axis'] = list(range(1, len(data['volume']) + 1))
+# print(data['x_axis'])
+ax8.bar(data['x_axis'][pos], data['volume'][pos], color="#18b800", width=0.8, align='center')
+ax8.bar(data['x_axis'][neg], data['volume'][neg], color="#ff3503", width=0.8, align='center')
+
+ymax = data['volume'].max()
+ystd = data['volume'].std()
+
+if not math.isnan(ymax):
+    ax8.set_ylim([0, ymax + ystd * 3])
+
+ax8.text(0.01, 0.95, 'Volume: ' + "{:,}".format(int(vol)), transform=ax8.transAxes, color='white',
+         fontsize=10, fontweight='bold', 
+         horizontalalignment='left', verticalalignment='top')
+
+ax8.grid(True, color='grey', linestyle='-', which='major', axis='both', linewidth=0.3)
+## ------------------------------------- VOLUME PLOT ----------------------------------- ##
+
+
+
+figure_design(ax9)
 
 
 
