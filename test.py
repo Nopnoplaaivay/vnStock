@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, MonthLocator
 from mplfinance.original_flavor import candlestick_ohlc
+from matplotlib.ticker import FuncFormatter
 from matplotlib.dates import date2num
 import datetime
 from datetime import date, datetime
@@ -11,17 +12,16 @@ from vnstock import *
 
 stocks = ['TV2', 'VCG', 'HSG', 'SSI', 'MWG', 'GIL', 'DXG']
 
-## ------------- Combine column FUNC ------------- ##
+## ------------- COMBINE COLUMN FUNC ------------- ##
 def combine_columns(row):
     return f"{row['change']} ({row['%_change']}%)"
-## ------------- Combine column FUNC ------------- ##
+## ------------- COMBINE COLUMN FUNC ------------- ##
 
 
 
-## -------------------------------- Get Stock Data FUNC -------------------------------- ##
-# Lấy dữ liệu cổ phiếu
+## -------------------------------- GET STOCK DATA FUNC -------------------------------- ##
 def real_time_stock(stock_code):
-    time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     stock_hist = stock_historical_data(stock_code, "2022-01-01",
                                          str(date.today()), "1D", "stock")
     stock_hist["%_change"] = round(((stock_hist['close'] - stock_hist['close'].shift(1))
@@ -29,7 +29,7 @@ def real_time_stock(stock_code):
     stock_hist['change'] = (stock_hist['close'] - stock_hist['close'].shift(1))
     stock_hist['latest_change'] = stock_hist.apply(combine_columns, axis=1)
     return stock_hist
-## -------------------------------- Get Stock Data FUNC -------------------------------- ##
+## -------------------------------- GET STOCK DATA FUNC -------------------------------- ##
 
 
 
@@ -44,8 +44,29 @@ for stock in stocks:
 
 
 
+## -------------------------------- COMPUTE RSI FUNC -------------------------------- ##
+def compute_RSI(data, time_window):
+    diff = data.diff(1).dropna()
 
-## ------------- Create FIGURES & AXIS -------------##
+    up_chg = 0 * diff
+    down_chg = 0 * diff
+
+    up_chg[diff > 0] = diff[diff > 0]
+    down_chg[diff < 0] = diff[diff < 0]
+
+    up_chg_avg = up_chg.ewm(com=time_window-1, min_periods=time_window).mean()
+    down_chg_avg = down_chg.ewm(com=time_window-1, min_periods=time_window).mean()
+
+    rs = abs(up_chg_avg / down_chg_avg)
+    rsi = 100 - 100 / (1 + rs)
+
+    return rsi
+## -------------------------------- COMPUTE RSI FUNC -------------------------------- ##
+
+
+
+
+## ------------- CREATE FIGURES & AXIS -------------##
 
 ## ------------- Entire Plot ---------- ##
 fig = plt.figure(figsize=(6, 6))        ##
@@ -96,12 +117,11 @@ fig_9 = fig.add_subfigure(gs[5, 0:4])   ##
 fig_9.set_facecolor("#282828")          ##
 ax9 = fig_9.subplots()                  ##
 ## -------------RSI Sub Plot ---------- ##
-
-## ------------- Create FIGURES & AXIS -------------##
-
+## ------------- CREATE FIGURES & AXIS -------------##
 
 
-## -------------------- Design plot FUNC -------------------- ##
+
+## -------------------- DESIGN PLOT FUNC -------------------- ##
 def figure_design(ax):
     ax.set_facecolor('#091217')
     ax.tick_params(axis='both', labelsize=9, colors='white')
@@ -110,11 +130,11 @@ def figure_design(ax):
     ax.spines['top'].set_color('#808080')
     ax.spines['left'].set_color('#808080')
     ax.spines['right'].set_color('#808080')
-## -------------------- Design plot FUNC -------------------- ##
+## -------------------- DESIGN PLOT FUNC -------------------- ##
 
 
 
-## ---------------------------------- Create Subplot FUNC ----------------------------------- ##
+## ---------------------------------- CREATE Subplot FUNC ----------------------------------- ##
 def subplot_plot(ax, sub_stock_code, data, latest_price, latest_change, latest_volume):
   ax.clear()
   ax.plot(list(range(1, len(data['close']) + 1)), data['close'], color="white", linewidth=2)
@@ -143,21 +163,23 @@ def subplot_plot(ax, sub_stock_code, data, latest_price, latest_change, latest_v
   figure_design(ax)
   ax.axes.xaxis.set_visible(False)
   ax.axes.yaxis.set_visible(False)
-## ---------------------------------- Create Subplot FUNC ----------------------------------- ##
+## ---------------------------------- CREATE Subplot FUNC ----------------------------------- ##
 
 
 
-## -------------------------- Create OPEN HIGH LOW CLOSE -------------------------- ##
+## -------------------------- OPEN HIGH LOW CLOSE FUNC -------------------------- ##
 def read_data_ohlc(filepath):
 
     ## READ FILE
     df = pd.read_csv(filepath, index_col='time', parse_dates=['time'])
+    df = df[~df.index.duplicated(keep='first')]
     df = df[['ticker', 'open', 'high', 'low', 'close' ,'latest_change', 'volume']]
     df['date'] = df.index
     df.index = pd.DatetimeIndex(df.index)
     df['MA20'] = df['close'].rolling(20).mean()
     df['MA50'] = df['close'].rolling(50).mean()
     df['MA200'] = df['close'].rolling(200).mean()
+    df['RSI'] = compute_RSI(df['close'], 14)
 
     latest_info = df.iloc[-1, :]
     latest_price = latest_info['close']
@@ -166,11 +188,11 @@ def read_data_ohlc(filepath):
     latest_volume = latest_info['volume']
 
     return df, latest_price, latest_change, latest_volume
-## -------------------------- Create OPEN HIGH LOW CLOSE -------------------------- ##
+## -------------------------- OPEN HIGH LOW CLOSE FUNC -------------------------- ##
 
 
 
-## ------------------------------------- CREATE MAIN STOCK ----------------------------------- ##
+## ------------------------------------- CREATE MAIN STOCK FUNC ----------------------------------- ##
 def main_plot(file_path, main_stock_code):
     ## Create Open High Low Close
     data, latest_price, latest_change, latest_volume = read_data_ohlc(file_path)
@@ -200,7 +222,7 @@ def main_plot(file_path, main_stock_code):
     ax1.set_title('Candlestick Chart', color='pink', fontsize=14, fontweight='bold')
     ax1.set_xlabel('Date', color='pink', fontsize=14, fontweight='bold') 
     ax1.set_ylabel('Price', color='pink', fontsize=14, fontweight='bold')
-    ax1.tick_params(axis='x', labelsize=5)
+    ax1.tick_params(axis='x', labelsize=5, rotation=45)
 
     ## Stock code 
     ax1.text(0.005, 1.05, main_stock_code, transform=ax1.transAxes, color='black', fontsize=18, 
@@ -255,7 +277,7 @@ for i in range(6):
 ## ------------------------------------- PLOT SUB STOCKS ----------------------------------- ##
 
 
-## ------------------------------------- VOLUME PLOT ----------------------------------- ##
+## ------------------------------------------- VOLUME PLOT ----------------------------------------- ##
 ax8.clear()
 figure_design(ax8)
 ax8.axes.yaxis.set_visible(False)
@@ -284,11 +306,38 @@ ax8.text(0.01, 0.95, 'Volume: ' + "{:,}".format(int(vol)), transform=ax8.transAx
          horizontalalignment='left', verticalalignment='top')
 
 ax8.grid(True, color='grey', linestyle='-', which='major', axis='both', linewidth=0.3)
-## ------------------------------------- VOLUME PLOT ----------------------------------- ##
+## ------------------------------------------- VOLUME PLOT ----------------------------------------- ##
 
 
 
+## ------------------------------------- RSI PLOT ----------------------------------- ##
+ax9.clear()
 figure_design(ax9)
+ax9.axes.yaxis.set_visible(False)
+ax9.set_ylim([-5, 105])
+
+ax9.axhline(30, linestyle='-', color='green', linewidth=0.5)
+ax9.axhline(50, linestyle='-', color='white', linewidth=0.5)
+ax9.axhline(70, linestyle='-', color='red', linewidth=0.5)
+ax9.plot(data['x_axis'], data['RSI'], color="#08a0e9", linewidth=1.5)
+
+ax9.text(0.01, 0.95, 'RSI(14): ' + str(round(data['RSI'].iloc[-1], 2)), transform=ax8.transAxes, color='white',
+         fontsize=10, fontweight='bold', 
+         horizontalalignment='left', verticalalignment='top')
+
+xdate = [i for i in data['date']]
+
+def mydate(x, pos=None):
+    try:
+        t = xdate[int(x)].strftime('%Y-%m')
+        return t
+    except IndexError:
+        return ''
+    
+ax9.xaxis.set_major_formatter(FuncFormatter(mydate))
+ax8.grid(True, color='grey', linestyle='-', which='major', axis='both', linewidth=0.3)
+ax9.tick_params(axis='x', which='major', labelsize=10)
+## ------------------------------------- RSI PLOT ----------------------------------- ##
 
 
 
@@ -296,8 +345,6 @@ figure_design(ax9)
 plt.xticks(rotation=45)
 fig.set_size_inches(1920/80, 1080/80)  
 plt.savefig("chart.png")
-
-## Show the chart
 plt.show()
 ## --------------- PLOT SHOW ------------- ##
 
