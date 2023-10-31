@@ -200,9 +200,9 @@ def main_plot(file_path, main_stock_code):
     candle_counter = range(len(data['open']) - 1)
     ohlc = []
     for  candle in candle_counter:
-        item = date2num(data['date'][candle]), data['open'][candle],\
-                data['high'][candle], data['low'][candle],\
-                data['close'][candle]
+        item = date2num(data['date'].iloc[candle]), data['open'].iloc[candle],\
+                data['high'].iloc[candle], data['low'].iloc[candle],\
+                data['close'].iloc[candle]
         ohlc.append(item)
 
     ## Define the date format for the x-axis
@@ -242,7 +242,7 @@ def main_plot(file_path, main_stock_code):
                 fontweight='bold', horizontalalignment='center', verticalalignment='center')
 
     time_stamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(time_stamp)
+    print(f"Chart on {time_stamp} get successful")
     ax1.text(0.92, 1.05, str(time_stamp), transform=ax1.transAxes, color='white', fontsize=12, 
             fontweight='bold', horizontalalignment='center', verticalalignment='center')
     # Add major gridlines
@@ -255,7 +255,7 @@ def main_plot(file_path, main_stock_code):
 
     ## figure design
     figure_design(ax1)
-## ------------------------------------- CREATE MAIN STOCK ----------------------------------- ##
+## ------------------------------------- CREATE MAIN STOCK FUNC ----------------------------------- ##
 
 
 
@@ -288,10 +288,7 @@ vol = data_ohlc[-1]
 
 pos = data['open'] - data['close'] < 0
 neg = data['open'] - data['close'] > 0
-# print(pos)
-# print(neg)
 data['x_axis'] = list(range(1, len(data['volume']) + 1))
-# print(data['x_axis'])
 ax8.bar(data['x_axis'][pos], data['volume'][pos], color="#18b800", width=0.8, align='center')
 ax8.bar(data['x_axis'][neg], data['volume'][neg], color="#ff3503", width=0.8, align='center')
 
@@ -310,7 +307,7 @@ ax8.grid(True, color='grey', linestyle='-', which='major', axis='both', linewidt
 
 
 
-## ------------------------------------- RSI PLOT ----------------------------------- ##
+## -------------------------------------------------- RSI PLOT -------------------------------------------------- ##
 ax9.clear()
 figure_design(ax9)
 ax9.axes.yaxis.set_visible(False)
@@ -337,14 +334,14 @@ def mydate(x, pos=None):
 ax9.xaxis.set_major_formatter(FuncFormatter(mydate))
 ax8.grid(True, color='grey', linestyle='-', which='major', axis='both', linewidth=0.3)
 ax9.tick_params(axis='x', which='major', labelsize=10)
-## ------------------------------------- RSI PLOT ----------------------------------- ##
+## -------------------------------------------------- RSI PLOT -------------------------------------------------- ##
 
 
 
 ## --------------- PLOT SHOW ------------- ##
 plt.xticks(rotation=45)
 fig.set_size_inches(1920/80, 1080/80)  
-plt.savefig("chart.png")
+plt.savefig(f"./Charts/chart_{date.today()}.png")
 plt.show()
 ## --------------- PLOT SHOW ------------- ##
 
